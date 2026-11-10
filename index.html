@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="et">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Book to audio</title>
+    <meta name="theme-color" content="#f6f1e7" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icon.svg" />
+    <link rel="apple-touch-icon" href="icon-192.png" />
+  </head>
+  <body>
+    <main id="stack"></main>
+    <p id="empty">Tap <b>+ pages</b> to photograph book pages.</p>
+
+    <input id="file" type="file" accept="image/*" capture="environment" multiple hidden />
+    <input id="retake" type="file" accept="image/*" capture="environment" hidden />
+    <button id="add" class="fab">+ pages</button>
+
+    <footer id="bar">
+      <button id="prev" aria-label="Previous chunk"><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg></button>
+      <button id="play" aria-label="Play"><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M7 4v16l13-8z"/></svg></button>
+      <button id="next" aria-label="Next chunk"><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M16 5h2v14h-2zM4 5v14l11-7z"/></svg></button>
+      <button id="gear" aria-label="Settings">⚙&#xFE0E;</button>
+      <span id="msg" role="status"></span>
+    </footer>
+
+    <dialog id="settings">
+      <form method="dialog">
+        <label>ElevenLabs API key <input id="key" type="password" autocomplete="off" /></label>
+        <p>Book: <span id="chars">0</span> characters</p>
+        <p id="missing"></p>
+        <button id="download" type="button">Download MP3</button>
+        <button value="close">Close</button>
+      </form>
+    </dialog>
+
+    <dialog id="pagemenu">
+      <form method="dialog">
+        <button value="retake">Retake page</button>
+        <button value="delete">Delete page</button>
+        <button value="cancel">Cancel</button>
+      </form>
+    </dialog>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

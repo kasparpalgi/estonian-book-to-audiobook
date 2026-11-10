@@ -1,0 +1,68 @@
+:root {
+  --paper: #f6f1e7;
+  --card: #fffdf8;
+  --ink: #2b2620;
+  --muted: #9a8f80;
+  --reading: #f3e3b5;
+  --line: #e4dccd;
+  font-family: system-ui, sans-serif;
+  color: var(--ink);
+  background: var(--paper);
+}
+body { margin: 0; background: var(--paper); }
+button { font: inherit; color: inherit; cursor: pointer; }
+
+#stack { max-width: 38rem; margin: 0 auto; padding: 16px 16px 140px; }
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px 18px 18px;
+  margin-bottom: 14px;
+  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  font-size: 1.15rem;
+  line-height: 1.75;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+.card p { margin: 0 0 0.9em; }
+.num { font: 0.75rem system-ui, sans-serif; color: var(--muted); margin-bottom: 4px; }
+.status { color: var(--muted); font-style: italic; }
+.s { border-radius: 3px; transition: background 0.3s; }
+.s.reading { background: var(--reading); }
+.s[contenteditable="plaintext-only"] { outline: 2px solid var(--muted); user-select: text; -webkit-user-select: text; }
+.tag { color: var(--muted); }
+.low { text-decoration: underline dotted var(--muted); text-underline-offset: 3px; }
+#empty { text-align: center; color: var(--muted); }
+
+.fab {
+  position: fixed;
+  right: 16px; bottom: 84px;
+  padding: 12px 18px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  box-shadow: 0 2px 8px #0002;
+  font-weight: 600;
+}
+
+#bar {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+  padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+  background: var(--card);
+  border-top: 1px solid var(--line);
+}
+#bar button { border: 0; background: none; font-size: 1.4rem; width: 48px; height: 44px; }
+#bar #gear { position: absolute; right: 8px; font-size: 1.1rem; color: var(--muted); }
+#play.loading { opacity: 0.4; }
+#msg { position: absolute; left: 16px; right: 16px; bottom: 100%; font-size: 0.85rem; text-align: center; color: #a33; }
+
+dialog { border: 1px solid var(--line); border-radius: 12px; background: var(--card); color: var(--ink); max-width: min(24rem, calc(100vw - 32px)); }
+dialog form { display: flex; flex-direction: column; gap: 10px; }
+dialog label { display: flex; flex-direction: column; gap: 4px; }
+dialog input { font: inherit; padding: 8px; border: 1px solid var(--line); border-radius: 6px; }
+dialog button { padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); }
+dialog p { margin: 0; }
