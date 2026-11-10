@@ -26,4 +26,5 @@ async function run<T>(store: Store, mode: IDBTransactionMode, fn: (s: IDBObjectS
 export const get = <T>(store: Store, key: string) => run<T | undefined>(store, 'readonly', (s) => s.get(key))
 export const put = (store: Store, key: string, value: unknown) => run(store, 'readwrite', (s) => s.put(value, key))
 export const del = (store: Store, key: string) => run(store, 'readwrite', (s) => s.delete(key))
+export const clear = (store: Store) => run(store, 'readwrite', (s) => s.clear())
 export const all = <T>(store: Store) => run<T[]>(store, 'readonly', (s) => s.getAll())

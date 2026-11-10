@@ -103,11 +103,13 @@ Check pricing, `languageHints: ["et"]` and the response shape in the current doc
   (needs real ElevenLabs MP3s).
 - Real ElevenLabs call not done yet: needs a key starting with `sk_`
   (the `.env` holds a key ID, not a key).
-- `src/player.ts` is 113 lines, `src/book.ts` 107 (guide: ~100).
+- `src/player.ts` is 118 lines, `src/book.ts` 114 (guide: ~100). Worth a split.
 
 ## Done in the last session (for context)
 Review fixes, committed on `app-v1`: a page added while the last chunk plays is no longer
 skipped (`player.ts`); an edit that moves a sentence boundary now redraws (`book.ts`);
 retake opens the camera inside the tap (`main.ts`); the offline app shell refreshes on
-each online visit (`sw.js`); photos turned upright before OCR (`upright.ts`).
+each online visit (`sw.js`); photos turned upright before OCR (`upright.ts`);
+**⚙ → Start a new book** (user request; added to SPEC.md and README.md) deletes all pages,
+their audio and the reading position, but keeps the key.
 All 18 unit tests, the Playwright test and the build pass.

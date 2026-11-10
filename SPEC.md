@@ -21,7 +21,8 @@ Use Context7 / the current ElevenLabs API docs for every parameter. Don't guess.
 - Background: the text stack. One plain card per photographed page, in order, scrollable.
   Small page number + cleaned text, readable serif font, generous line height, no other chrome.
 - Foreground: slim player bar pinned to the bottom (play/pause, prev/next chunk), a floating
-  "+ pages" button and a small ⚙ button (API key, character count of the book, Download MP3).
+  "+ pages" button and a small ⚙ button (API key, character count of the book, Download MP3,
+  Start a new book = delete all pages, their audio and the reading position; keeps the key).
 - The chunk being read is softly highlighted, and the stack auto-scrolls to it.
 - Tap a sentence → editable inline (contenteditable), saved on blur. I can type audio tags
   like [whispers] by hand. Tags are shown in a muted color.

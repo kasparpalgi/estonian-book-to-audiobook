@@ -84,6 +84,11 @@ export function createPlayer(getChunks: () => Chunk[], apiKey: () => string, onS
 
   return {
     restore: (ref?: Ref) => ((position = ref), report()),
+    reset() {
+      stop()
+      position = lastRef = undefined
+      loadedKey = ''
+    },
     refresh: () => report(),
     async toggle() {
       if (playing) return stop()

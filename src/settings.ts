@@ -2,8 +2,14 @@ import type { Chunk } from './chunk'
 import * as db from './db'
 import { cacheKey } from './hash'
 
-// ⚙ panel: API key (the only stored setting), book character count, Download MP3.
-export function wireSettings(dialog: HTMLDialogElement, getChunks: () => Chunk[], onKey: (key: string) => void) {
+// ⚙ panel: API key (the only stored setting), book character count, Download MP3,
+// Start a new book.
+export function wireSettings(
+  dialog: HTMLDialogElement,
+  getChunks: () => Chunk[],
+  onKey: (key: string) => void,
+  onClear: () => Promise<void>,
+) {
   const keyInput = dialog.querySelector<HTMLInputElement>('#key')!
   const chars = dialog.querySelector('#chars')!
   const missing = dialog.querySelector('#missing')!
@@ -42,6 +48,12 @@ export function wireSettings(dialog: HTMLDialogElement, getChunks: () => Chunk[]
     const a = Object.assign(document.createElement('a'), { href: url, download: 'book.mp3' })
     a.click()
     setTimeout(() => URL.revokeObjectURL(url), 10_000)
+  })
+
+  dialog.querySelector('#clear')!.addEventListener('click', async () => {
+    if (!confirm('Delete all pages and their audio, and start a new book?')) return
+    await onClear()
+    dialog.close()
   })
 
   return {

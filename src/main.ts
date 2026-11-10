@@ -74,7 +74,10 @@ $<HTMLInputElement>('file').addEventListener('change', (e) => {
 })
 $('add').addEventListener('click', () => $('file').click())
 
-const settings = wireSettings($<HTMLDialogElement>('settings'), getChunks, (key) => (apiKey = key))
+const settings = wireSettings($<HTMLDialogElement>('settings'), getChunks, (key) => (apiKey = key), async () => {
+  player.reset()
+  await book.clearAll()
+})
 $('gear').addEventListener('click', () => settings.open())
 playButton.addEventListener('click', () => player.toggle())
 $('prev').addEventListener('click', () => player.step(-1))

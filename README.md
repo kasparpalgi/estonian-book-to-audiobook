@@ -16,6 +16,7 @@ Photograph Estonian book pages and hear them read aloud by ElevenLabs
    Type, then tap anywhere else to save. You can type tags like `[whispers]` or `[sighs]`.
 6. **Long-press a page** → *Retake page* or *Delete page*.
 7. **⚙ → Download MP3** saves the whole book as one file.
+8. **⚙ → Start a new book** deletes all pages and their audio (the API key stays).
    If some parts haven't been played yet, it tells you how many are missing.
 
 Good to know:

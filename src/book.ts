@@ -86,6 +86,13 @@ export function remove(id: string) {
   listener()
 }
 
+// Start a new book: drop every page, its saved audio and the reading position.
+export async function clearAll() {
+  pages.length = 0
+  await Promise.all([db.clear('pages'), db.clear('audio'), db.del('kv', 'position'), saveOrder()])
+  listener()
+}
+
 // Replace one sentence. Returns true if the card must be redrawn
 // (the edit added or removed sentences, so indexes shifted).
 export function editSentence(ref: Ref, text: string): boolean {
