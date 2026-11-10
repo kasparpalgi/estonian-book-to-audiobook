@@ -1,75 +1,113 @@
-# Handover: code review + testing
+# Handover: make OCR as good as Google Lens
 
-**What:** first full build of the PWA in `SPEC.md`: photograph Estonian book pages →
-on-device OCR → ElevenLabs reads them → download one MP3. No backend.
-**User guide:** `README.md`. **Agent rules:** `AGENTS.md`.
+**Goal of the next session:** a photographed Estonian book page comes out as text that is
+as good as Google Lens gives (ideally better), so ElevenLabs reads it without nonsense.
+**Rules:** `AGENTS.md`. **Spec:** `SPEC.md`. **User guide:** `README.md`.
 
-## Run it
-```sh
-npm install
-npx playwright install chromium   # first time
-npm test        # 18 unit tests
-npm run e2e     # Playwright: add page → text → edit → play (OCR + ElevenLabs mocked)
-npm run dev     # http://localhost:5173 (real OCR; real ElevenLabs with a key in ⚙)
-npm run build && npm run preview  # production build at /estonian-book-to-audiobook/
-```
+## Where things stand (2026-11-11)
+- Live: https://kasparpalgi.github.io/estonian-book-to-audiobook/ (repo is public now).
+- Code is on local branch `app-v1` (latest: "Turn phone photos upright before OCR").
+  **Not pushed**: the `gh` token lacks the `workflow` scope, so GitHub rejects any push
+  that contains `.github/workflows/deploy.yml`.
+- Stopgap deploy: Pages serves the `gh-pages` branch (just `dist/` + `.nojekyll`),
+  Pages source = "Deploy from a branch".
+- **To get the normal setup back:** the user runs `! gh auth refresh -h github.com -s workflow`.
+  Then push `app-v1`, fast-forward `master`, push `master`, set Pages back to Actions
+  (`gh api -X PUT repos/kasparpalgi/estonian-book-to-audiobook/pages -f build_type=workflow`),
+  and delete the `gh-pages` branch.
+- Until then, deploy by hand: `npm run build`, copy `dist/` + `.nojekyll` into a checkout of
+  `gh-pages`, commit, push.
 
-## Already verified
-| Check | Result |
-|---|---|
-| Unit tests (clean, chunk, cache key, request-body snapshot) | 18/18 pass |
-| Playwright test | passed 12 times in a row, including cold starts (one unexplained failure once) |
-| Real tesseract `est` on a generated page photo | paragraphs, hyphen join, page number dropped |
-| 4-page flow, ElevenLabs mocked | 2 chunks, play + prefetch next, `previous_text`/`next_text` set, MP3 = both chunks |
-| Replay | served from IndexedDB, no new request |
-| Long-press → delete, reload | page gone, text and position persist |
-| Service worker | caches the app shell; offline reload works |
-| CORS preflight to api.elevenlabs.io | `access-control-allow-origin: *` on success and on errors |
+## The problem
+- First phone photo: **pure gibberish.** Cause: tesseract.js only applies EXIF orientation
+  when it is stored big-endian (it regex-matches bytes `1 18 0 3 0 0 0 1 0 X` in the first
+  500 bytes). Many Android phones store it little-endian, so the page was OCR'd sideways.
+  **Fixed:** `src/upright.ts` redraws the photo through `<img>` + canvas (browsers apply
+  every EXIF flag) and caps the long side at 3000 px. On a generated sideways 12 MP photo,
+  real OCR in Chromium is now word-perfect.
+- After the fix: **the user can read the text, but it is "far from what Google Lens gives".**
+  We don't have the user's tesseract output or the photo yet.
 
-## Not verified yet (please test)
-1. **A real ElevenLabs call.** `.env` holds the API key *ID*, not the key, so the API
-   refused it. Put a key starting with `sk_` in ⚙ (or `.env`) and play one page.
-   Confirm `eleven_v4` is listed by `GET /v1/models`, then listen: Estonian, voice Emppu,
-   `[whispers]` performed and not read out.
-2. **A real phone**, especially iOS Safari: camera capture, long-press menu,
-   tap-to-edit caret position (`caretRangeFromPoint`), `contenteditable="plaintext-only"`.
-3. **GitHub Pages deploy.** The repo is private, so Pages needs GitHub Pro (or make the
-   repo public). Then set Settings → Pages → Source: GitHub Actions.
+## Material
+- `samples/page1.lens.txt`: Google Lens text of the user's page (reference text).
+  `samples/` is **gitignored on purpose**: it is copyrighted book text, the repo is public.
+  Never commit it.
+- **Ask the user first** to put the original photo(s) in `samples/`
+  (e.g. `samples/page1.jpg`), not a screenshot. Also ask what the app showed for that page.
+- Lens is not perfect either. In the last paragraph it mixed up the line order:
+  "…(Jaani võimas habe - välimuse poolest võiks teda vabalt näiteks keskaegseks on ikka
+  julgesti üle saja kilo) ja mungaks…" should read
+  "(Jaani võimas habe - on ikka julgesti üle saja kilo) ja välimuse poolest võiks teda
+  vabalt näiteks keskaegseks mungaks…". Don't treat the Lens text as 100 % true.
+- Things in this page the cleanup must handle: a title line, dialogue in „…" quotes, a
+  "tas-kust" hyphen at a line end, "kirjel danud" (the split-word case from SPEC.md),
+  "kaja-ka" (a real hyphen, keep it), "Kutsuja-Viinakurat..", "nii" + colon-less quote.
 
-## Phone test script (photo → MP3)
-1. Open the site → Add to Home screen → open it from the icon.
-2. ⚙ → paste key → Close.
-3. + pages → photograph 3 pages, one at a time. Press ▶ while page 3 is still reading.
-4. Tap a sentence on page 2 → playback jumps there. Type ` [sighs]` → tap outside.
-   The tag turns grey and only that chunk is regenerated.
-5. ⏮ ⏭ → moves by chunk; the highlight follows and the page scrolls.
-6. Long-press page 1 → Retake → new photo replaces the text.
-7. Close the app fully, reopen → same pages, same position.
-8. ⚙ → Download MP3 → plays start to end. The "not generated yet" count makes sense.
-9. Airplane mode → the app still opens; OCR still works (after one online run).
-10. A wrong key or used-up quota → the error appears in plain words above the bar.
+## Decision for the user (ask before building)
+SPEC.md says OCR is **on-device with tesseract.js**. Matching Lens probably means
+sending photos to a cloud service. That changes the spec, so the user must choose:
 
-## Where to look hardest in review
-- `src/chunk.ts`: a chunk ends at the first real paragraph end after 800 chars (max 1500).
-  The point is that an edit re-synthesizes only nearby chunks. Is the
-  page-break glue (a sentence or a hyphenated word cut by a page break) right?
-- `src/player.ts`: `token` cancels stale plays; `loadedKey` decides resume vs regenerate
-  after an edit. Check rapid ⏮/⏭/tap sequences.
-- `src/stack.ts` + `src/render.ts`: tap = jump and edit. Cards are reconciled by `rev`,
-  so an open edit survives OCR progress on other pages. Redraws only when an
-  edit changes the sentence count.
-- `src/clean.ts`: heuristics. A short line ending a sentence = paragraph end. A split
-  word is joined only if the full word appears elsewhere and one piece never appears alone.
-- `src/tts.ts`: sends the whole neighbouring chunk as `previous_text`/`next_text`. The
-  TTS docs give no max length for these (text-to-dialogue caps them at 100).
-- `public/sw.js`: bump `CACHE` if caching rules change.
+| Option | Quality | Cost / privacy | Offline |
+|---|---|---|---|
+| A. Tune tesseract (preprocess, `tessdata_best`, PSM) | better, likely still below Lens on curved phone photos | free, on-device | yes |
+| B. Google Cloud Vision `DOCUMENT_TEXT_DETECTION` | the same engine family as Lens | paid after a free tier (**verify current pricing**), photo goes to Google | no |
+| C. A vision LLM (Gemini or Claude) transcribes the page | likely best at reading order, hyphens, paragraphs | per-call cost, photo goes to the provider; risk of "fixing" the author's words | no |
 
-## Known limits / decisions
-- **Auto-tag:** skipped. ElevenLabs has no public API for it.
-- **Paragraph detection depends on what tesseract gives.** In the test photo, two
-  paragraphs on page 2 merged into one. Harmless for audio (it chunks by length), but
-  visible.
-- **Cache key = text + settings, without neighbours.** So two identical chunks share
-  one MP3, and an edit never regenerates its neighbours.
-- **MP3 download** is the cached MP3s joined end to end (no re-encoding).
-- `src/book.ts` (106 lines) and `src/player.ts` (104) are just over the ~100-line guide.
+Verified today: `vision.googleapis.com` and `generativelanguage.googleapis.com` both answer
+the CORS preflight from `https://kasparpalgi.github.io` (allow-origin echoed,
+`content-type,x-goog-api-key` allowed). So B or C works from the browser with a key in ⚙,
+like ElevenLabs. No backend needed.
+**Recommendation:** B, with tesseract kept as the offline fallback only if the user wants
+offline OCR. Then update SPEC.md and README.md, and add the key field to ⚙.
+Check pricing, `languageHints: ["et"]` and the response shape in the current docs
+(Context7) first. Don't guess.
+
+## How to measure (do this before changing anything)
+1. Write a throwaway script (not committed) that runs real OCR on `samples/*.jpg` in Chromium
+   through the dev server and prints the cleaned text. This one worked for testing the EXIF
+   fix: start `npx vite --port 5180`, Playwright `setInputFiles('#file', photo)`, wait for
+   `.card .s`, print `.card` text.
+2. Compare with `samples/page1.lens.txt`: word error rate (word-level Levenshtein), plus a
+   diff by eye of hyphens, paragraphs and quotes.
+3. Try each option on the same photo, report the numbers, then build the winner.
+
+## Ideas to try for option A (tesseract), cheapest first
+- `langPath` → `tessdata_best` for `est` (tesseract.js 7.0.0 defaults to `4.0.0_best_int`
+  for OEM 1). Check that the URL exists and the service worker still caches it.
+- Preprocess in `src/upright.ts`: grayscale + contrast stretch; maybe an adaptive threshold.
+- `tessedit_pageseg_mode` (3 = auto vs 4 = single column, 6 = single block).
+- Set `user_defined_dpi` (~300) so tesseract doesn't guess the DPI.
+- Try the size cap: 3000 px vs the full photo (text height matters, ~30 px x-height is ideal).
+- A crop/dewarp of a curved page is probably too much code for this app's simplicity rule.
+
+## Text-cleanup issues spotted (independent of which OCR wins)
+- **Estonian closing quote.** Estonian dialogue is „…“: the closing quote is U+201C `“`.
+  `TERMINAL` and the sentence splitter in `src/sentences.ts` only know `"»”’)`, so
+  `„Tere.“ Next` is not split and does not count as a paragraph end. Add `“` (and test).
+- **Title lines** ("Kuidas Jaan Viinakuradiga tookord") have no terminal punctuation, so they
+  get glued onto the first paragraph. Probably: a short line followed by a blank line = its
+  own paragraph.
+- `joinSplitWords` (in `src/clean.ts`) needs only one rare piece, so a rare word + a common
+  clitic ("ka", "ki", "gi", "ju") can merge wrongly ("maja ka" → "majaka" if "majaka"
+  appears elsewhere).
+- If the OCR engine already joins lines (Vision/LLM do), `cleanText` must not mangle
+  its output. Keep the hyphen-join and page-number rules and run them on the raw lines.
+
+## Still open from the code review (lower priority)
+- iOS: the first ▶ may be blocked, because `audio.play()` runs after an `await`
+  (fix: unlock the `<audio>` synchronously in the tap). Retake was changed to open the
+  camera inside the tap. Needs a real iPhone.
+- Deleting the page being read sends playback back to the start of the book.
+- Tapping a sentence while playing jumps to its chunk's start, not the sentence.
+- Download MP3: check that players show the full length of the joined file
+  (needs real ElevenLabs MP3s).
+- Real ElevenLabs call not done yet: needs a key starting with `sk_`
+  (the `.env` holds a key ID, not a key).
+- `src/player.ts` is 113 lines, `src/book.ts` 107 (guide: ~100).
+
+## Done in the last session (for context)
+Review fixes, committed on `app-v1`: a page added while the last chunk plays is no longer
+skipped (`player.ts`); an edit that moves a sentence boundary now redraws (`book.ts`);
+retake opens the camera inside the tap (`main.ts`); the offline app shell refreshes on
+each online visit (`sw.js`); photos turned upright before OCR (`upright.ts`).
+All 18 unit tests, the Playwright test and the build pass.
