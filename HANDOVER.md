@@ -6,17 +6,9 @@ as good as Google Lens gives (ideally better), so ElevenLabs reads it without no
 
 ## Where things stand (2026-11-11)
 - Live: https://kasparpalgi.github.io/estonian-book-to-audiobook/ (repo is public now).
-- Code is on local branch `app-v1` (latest: "Turn phone photos upright before OCR").
-  **Not pushed**: the `gh` token lacks the `workflow` scope, so GitHub rejects any push
-  that contains `.github/workflows/deploy.yml`.
-- Stopgap deploy: Pages serves the `gh-pages` branch (just `dist/` + `.nojekyll`),
-  Pages source = "Deploy from a branch".
-- **To get the normal setup back:** the user runs `! gh auth refresh -h github.com -s workflow`.
-  Then push `app-v1`, fast-forward `master`, push `master`, set Pages back to Actions
-  (`gh api -X PUT repos/kasparpalgi/estonian-book-to-audiobook/pages -f build_type=workflow`),
-  and delete the `gh-pages` branch.
-- Until then, deploy by hand: `npm run build`, copy `dist/` + `.nojekyll` into a checkout of
-  `gh-pages`, commit, push.
+- Deploy: **every push to `master` deploys** through `.github/workflows/deploy.yml`
+  (test → build → Pages). Pages source = GitHub Actions. `app-v1` and `master` are pushed
+  and equal.
 
 ## The problem
 - First phone photo: **pure gibberish.** Cause: tesseract.js only applies EXIF orientation
