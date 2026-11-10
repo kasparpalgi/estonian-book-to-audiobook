@@ -19,6 +19,7 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(req.url)
   const tesseract = url.hostname === 'cdn.jsdelivr.net' && url.pathname.includes('tesseract')
   if (req.method !== 'GET' || (url.origin !== location.origin && !tesseract)) return
+  if (req.cache === 'no-store') return // the app's update check wants the network
 
   if (req.mode === 'navigate') {
     // Network first so updates arrive; refresh the cached shell; use it when offline.

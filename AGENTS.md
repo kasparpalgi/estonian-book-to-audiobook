@@ -38,6 +38,7 @@ Personal PWA: photograph Estonian book pages → OCR on-device → read aloud by
 | `src/player.ts` | one `<audio>`, play chunks in order, prefetch next |
 | `src/settings.ts` | ⚙ panel: API key, char count, Download MP3 |
 | `src/main.ts` | wiring |
+| `src/update.ts` | reload to the newest deployed version when the app is opened |
 | `public/sw.js` | service worker: app shell + tesseract model cache |
 
 ## Verified facts (2026-11-11)

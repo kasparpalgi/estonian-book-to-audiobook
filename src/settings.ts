@@ -3,7 +3,7 @@ import * as db from './db'
 import { cacheKey } from './hash'
 
 // ⚙ panel: API key (the only stored setting), book character count, Download MP3,
-// Start a new book.
+// Start a new book, Reload app.
 export function wireSettings(
   dialog: HTMLDialogElement,
   getChunks: () => Chunk[],
@@ -50,6 +50,7 @@ export function wireSettings(
     setTimeout(() => URL.revokeObjectURL(url), 10_000)
   })
 
+  dialog.querySelector('#reload')!.addEventListener('click', () => location.reload())
   dialog.querySelector('#clear')!.addEventListener('click', async () => {
     if (!confirm('Delete all pages and their audio, and start a new book?')) return
     await onClear()

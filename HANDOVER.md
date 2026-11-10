@@ -104,4 +104,7 @@ retake opens the camera inside the tap (`main.ts`); the offline app shell refres
 each online visit (`sw.js`); photos turned upright before OCR (`upright.ts`);
 **⚙ → Start a new book** (user request; added to SPEC.md and README.md) deletes all pages,
 their audio and the reading position, but keeps the key.
+**Auto-update** (`update.ts`): on open / return to the app it reloads to the newest
+deployed version unless playing or editing; ⚙ → Reload app forces it. `sw.js` lets
+`cache: 'no-store'` requests through to the network for this check.
 All 18 unit tests, the Playwright test and the build pass.

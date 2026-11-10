@@ -17,6 +17,7 @@ Photograph Estonian book pages and hear them read aloud by ElevenLabs
 6. **Long-press a page** → *Retake page* or *Delete page*.
 7. **⚙ → Download MP3** saves the whole book as one file.
 8. **⚙ → Start a new book** deletes all pages and their audio (the API key stays).
+9. The app updates itself when you open it (not while it plays). **⚙ → Reload app** forces it.
    If some parts haven't been played yet, it tells you how many are missing.
 
 Good to know:

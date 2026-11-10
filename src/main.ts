@@ -7,6 +7,7 @@ import { fillSentence, highlight, renderStack } from './render'
 import { splitSentences } from './sentences'
 import { wireSettings } from './settings'
 import { wireStack } from './stack'
+import { autoUpdate } from './update'
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T
 const stack = $('stack')
@@ -90,4 +91,9 @@ player.restore(await db.get<Ref>('kv', 'position'))
 
 if (import.meta.env.PROD && 'serviceWorker' in navigator) {
   navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`)
+}
+if (import.meta.env.PROD) {
+  const playing = () => playButton.getAttribute('aria-label') === 'Pause'
+  const editing = () => !!(document.activeElement as HTMLElement | null)?.isContentEditable
+  autoUpdate(() => playing() || editing())
 }

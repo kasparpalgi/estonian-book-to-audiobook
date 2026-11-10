@@ -55,6 +55,8 @@ Use Context7 / the current ElevenLabs API docs for every parameter. Don't guess.
 
 ## PWA
 - manifest + simple service worker caching the app shell and the tesseract "est" model.
+- Opening the app (or returning to it) loads the newest deployed version, unless it is
+  playing or I'm editing. ⚙ has a "Reload app" button.
 - Deploy to GitHub Pages via GitHub Actions (vite base path set correctly).
 
 ## Tests
