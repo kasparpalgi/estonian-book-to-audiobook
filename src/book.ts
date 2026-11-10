@@ -94,7 +94,8 @@ export function editSentence(ref: Ref, text: string): boolean {
   const sentences = splitSentences(page.paragraphs[ref.p])
   sentences[ref.s] = text.replace(/\s+/g, ' ').trim()
   page.paragraphs[ref.p] = joinSentences(sentences)
-  const reshaped = splitSentences(page.paragraphs[ref.p]).length !== sentences.length || !sentences[ref.s]
+  // Compare whole sentences, not counts: "Tere. Maailm" can shift a boundary.
+  const reshaped = splitSentences(page.paragraphs[ref.p]).join('\n') !== sentences.join('\n')
   if (reshaped) {
     page.paragraphs = page.paragraphs.filter(Boolean)
     changed(page)

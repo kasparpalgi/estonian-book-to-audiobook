@@ -56,8 +56,9 @@ wireStack(stack, {
   },
 })
 
+// Open the camera inside the tap itself: iOS blocks file pickers opened later.
+pageMenu.querySelector('[value=retake]')!.addEventListener('click', () => $('retake').click())
 pageMenu.addEventListener('close', () => {
-  if (pageMenu.returnValue === 'retake') $('retake').click()
   if (pageMenu.returnValue === 'delete') book.remove(pageMenu.dataset.id!)
 })
 $<HTMLInputElement>('retake').addEventListener('change', (e) => {

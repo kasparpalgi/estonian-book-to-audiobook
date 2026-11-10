@@ -1,4 +1,4 @@
-import { chunkIndexOf, type Chunk, type Ref } from './chunk'
+import { chunkIndexOf, sameRef, type Chunk, type Ref } from './chunk'
 import * as db from './db'
 import { cacheKey } from './hash'
 import { synthesize } from './tts'
@@ -31,6 +31,7 @@ export function createPlayer(getChunks: () => Chunk[], apiKey: () => string, onS
   let position: Ref | undefined // first sentence of the current chunk
   let playing = false
   let loadedKey = '' // cache key of the chunk now in <audio>
+  let lastRef: Ref | undefined // last sentence of the chunk now in <audio>
   let token = 0
 
   const index = () => Math.max(0, position ? chunkIndexOf(getChunks(), position) : 0)
@@ -56,6 +57,7 @@ export function createPlayer(getChunks: () => Chunk[], apiKey: () => string, onS
       URL.revokeObjectURL(audio.src)
       audio.src = URL.createObjectURL(blob)
       loadedKey = await cacheKey(chunks[i].text)
+      lastRef = chunks[i].refs.at(-1)
       await audio.play()
       report()
       if (chunks[i + 1]) chunkAudio(chunks, i + 1, apiKey()).catch(() => {}) // prefetch next only
@@ -71,7 +73,14 @@ export function createPlayer(getChunks: () => Chunk[], apiKey: () => string, onS
     report({ error })
   }
 
-  audio.addEventListener('ended', () => playing && play(index() + 1))
+  // If the chunk grew while it played (a new page continued it), replay it
+  // rather than skip the new sentences.
+  function nextIndex() {
+    const chunks = getChunks()
+    const j = lastRef ? chunkIndexOf(chunks, lastRef) : -1
+    return j !== -1 && !sameRef(chunks[j].refs.at(-1)!, lastRef!) ? j : index() + 1
+  }
+  audio.addEventListener('ended', () => playing && play(nextIndex()))
 
   return {
     restore: (ref?: Ref) => ((position = ref), report()),

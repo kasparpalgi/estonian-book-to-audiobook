@@ -21,8 +21,16 @@ self.addEventListener('fetch', (event) => {
   if (req.method !== 'GET' || (url.origin !== location.origin && !tesseract)) return
 
   if (req.mode === 'navigate') {
-    // Network first so updates arrive; cached shell when offline.
-    event.respondWith(fetch(req).catch(() => caches.match('./')))
+    // Network first so updates arrive; refresh the cached shell; use it when offline.
+    event.respondWith(
+      fetch(req)
+        .then((res) => {
+          const copy = res.clone()
+          if (res.ok) caches.open(CACHE).then((c) => c.put('./', copy))
+          return res
+        })
+        .catch(() => caches.match('./')),
+    )
     return
   }
   event.respondWith(
