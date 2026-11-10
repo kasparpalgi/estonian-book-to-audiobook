@@ -31,6 +31,7 @@ Personal PWA: photograph Estonian book pages → OCR on-device → read aloud by
 | `src/tts.ts` | ElevenLabs request body + fetch + readable errors |
 | `src/db.ts` | tiny IndexedDB wrapper (pages, audio, kv) |
 | `src/ocr.ts` | tesseract.js "est" queue with progress |
+| `src/upright.ts` | turn phone photos upright (EXIF) + cap size before OCR |
 | `src/book.ts` | app state: pages, add/edit/delete, persistence |
 | `src/render.ts` | draw page cards + sentences |
 | `src/stack.ts` | card interactions: tap/edit/long-press |

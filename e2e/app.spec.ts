@@ -15,7 +15,7 @@ test('add page → text appears → edit a sentence → play', async ({ page }) 
   await page.fill('#key', 'test-key')
   await page.press('#key', 'Enter')
 
-  await page.setInputFiles('#file', { name: 'page.jpg', mimeType: 'image/jpeg', buffer: Buffer.from('x') })
+  await page.setInputFiles('#file', 'public/icon-192.png') // any real image; OCR is mocked
   const second = page.locator('.s', { hasText: 'Teine lause' })
   await expect(second).toBeVisible()
   await expect(page.locator('.card')).not.toContainText('5 -')

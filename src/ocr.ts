@@ -1,4 +1,5 @@
 import { createWorker, type Worker } from 'tesseract.js'
+import { upright } from './upright'
 
 const LOW_CONFIDENCE = 70 // words below this get a dotted underline
 
@@ -24,7 +25,7 @@ function getWorker(): Promise<Worker> {
 export function ocr(image: Blob, onProgress: (progress: number) => void): Promise<OcrResult> {
   const job = queue.then(async () => {
     report = onProgress
-    const { data } = await (await getWorker()).recognize(image, {}, { text: true, blocks: true })
+    const { data } = await (await getWorker()).recognize(await upright(image), {}, { text: true, blocks: true })
     const words = (data.blocks ?? []).flatMap((b) =>
       b.paragraphs.flatMap((p) => p.lines.flatMap((l) => l.words)),
     )
