@@ -2,7 +2,7 @@ import type { Chunk } from './chunk'
 import * as db from './db'
 import { cacheKey } from './hash'
 
-// ⚙ panel: API key (the only stored setting), book character count, Download MP3,
+// ⚙ panel: API keys (ElevenLabs, Google Vision; the only stored settings), book character count, Download MP3,
 // Start a new book, Reload app.
 export function wireSettings(
   dialog: HTMLDialogElement,
@@ -24,6 +24,10 @@ export function wireSettings(
     db.put('kv', 'apiKey', key)
     onKey(key)
   })
+
+  const gkeyInput = dialog.querySelector<HTMLInputElement>('#gkey')!
+  db.get<string>('kv', 'visionKey').then((key) => (gkeyInput.value = key ?? ''))
+  gkeyInput.addEventListener('change', () => db.put('kv', 'visionKey', gkeyInput.value.trim()))
 
   async function cachedParts() {
     const chunks = getChunks()

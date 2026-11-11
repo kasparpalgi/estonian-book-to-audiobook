@@ -30,7 +30,7 @@ export function pageCard(page: Page, number: number): HTMLElement {
   card.dataset.rev = String(page.rev)
   card.append(el('div', 'num', String(number)))
   if (page.status === 'ocr') {
-    card.append(el('p', 'status', `Reading text… ${Math.round(page.progress * 100)}%`))
+    card.append(el('p', 'status', `Reading text…${page.progress ? ` ${Math.round(page.progress * 100)}%` : ''}`))
   } else if (page.status === 'error') {
     card.append(el('p', 'status', `Could not read this page: ${page.error}`))
   }

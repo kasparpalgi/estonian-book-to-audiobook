@@ -64,7 +64,7 @@ async function runOcr(page: Page) {
     const context = pages.filter((p) => p !== page).flatMap((p) => p.paragraphs).join(' ')
     Object.assign(page, { paragraphs: cleanText(result.text, context), lowConf: result.lowConf, status: 'done', image: undefined })
   } catch (e) {
-    Object.assign(page, { status: 'error', error: String(e) })
+    Object.assign(page, { status: 'error', error: e instanceof Error ? e.message : String(e) })
   }
   if (pages.includes(page)) changed(page)
 }

@@ -1,6 +1,6 @@
 # Agent instructions
 
-Personal PWA: photograph Estonian book pages → OCR on-device → read aloud by ElevenLabs.
+Personal PWA: photograph Estonian book pages → OCR (Google Cloud Vision, tesseract fallback) → read aloud by ElevenLabs.
 `SPEC.md` is the source of truth for what to build. `README.md` is the user guide.
 
 ## Rules
@@ -8,7 +8,7 @@ Personal PWA: photograph Estonian book pages → OCR on-device → read aloud by
 - Plain Vite + TypeScript, no UI framework, no backend, no database server.
 - Files under ~100 lines each, one job per file.
 - ElevenLabs settings live only in `src/config.ts` and must match SPEC.md 1:1.
-  Never make them user-editable. The ⚙ panel stores only the API key.
+  Never make them user-editable. The ⚙ panel stores only the API keys (ElevenLabs, Google Vision).
 - Look up ElevenLabs / tesseract.js parameters in current docs (Context7). Don't guess.
 
 ## Commands
@@ -30,7 +30,8 @@ Personal PWA: photograph Estonian book pages → OCR on-device → read aloud by
 | `src/hash.ts` | cache key = sha256(text + settings) |
 | `src/tts.ts` | ElevenLabs request body + fetch + readable errors |
 | `src/db.ts` | tiny IndexedDB wrapper (pages, audio, kv) |
-| `src/ocr.ts` | tesseract.js "est" queue with progress |
+| `src/ocr.ts` | OCR queue: Google Vision if a key is set, else/offline tesseract.js "est" |
+| `src/vision.ts` | Google Cloud Vision request + response → raw text with line/paragraph breaks |
 | `src/upright.ts` | turn phone photos upright (EXIF) + cap size before OCR |
 | `src/book.ts` | app state: pages, add/edit/delete, persistence |
 | `src/render.ts` | draw page cards + sentences |
@@ -48,3 +49,8 @@ Personal PWA: photograph Estonian book pages → OCR on-device → read aloud by
 - `output_format` is a query parameter on `POST /v1/text-to-speech/{voice_id}`.
 - CORS: api.elevenlabs.io answers preflight with `access-control-allow-origin: *`.
 - No public API for the UI's "Auto-tag" feature, so it's not built.
+- Google Vision: `POST https://vision.googleapis.com/v1/images:annotate`, key in the
+  `x-goog-api-key` header works, CORS allows this origin (also on errors). Errors come as
+  `{error:{code,message}}` (whole request) or `responses[0].error` (per image). Limits:
+  20 MB file, 10 MB JSON. Estonian `et` is fully supported. `HYPHEN` break = "end-line
+  hyphen that is not present in text". Pricing page is JS-only: not verified.

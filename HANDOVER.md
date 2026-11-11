@@ -1,4 +1,4 @@
-# Handover: make OCR as good as Google Lens
+# Handover: OCR as good as Google Lens (Google Vision built; check on a real photo)
 
 **Goal of the next session:** a photographed Estonian book page comes out as text that is
 as good as Google Lens gives (ideally better), so ElevenLabs reads it without nonsense.
@@ -35,55 +35,43 @@ as good as Google Lens gives (ideally better), so ElevenLabs reads it without no
   "tas-kust" hyphen at a line end, "kirjel danud" (the split-word case from SPEC.md),
   "kaja-ka" (a real hyphen, keep it), "Kutsuja-Viinakurat..", "nii" + colon-less quote.
 
-## Decision for the user (ask before building)
-SPEC.md says OCR is **on-device with tesseract.js**. Matching Lens probably means
-sending photos to a cloud service. That changes the spec, so the user must choose:
+## Decided and built: Google Cloud Vision (option B)
+The user chose Google ("integrate google lens"). Google Lens has no API, so it's
+**Cloud Vision `DOCUMENT_TEXT_DETECTION`** (`src/vision.ts`), key in ⚙ (`kv.visionKey`).
+No key, or offline (fetch throws) → tesseract as before. Google errors show on the card.
+Tested with Google's response mocked (Playwright, not committed): the request carries the key
+header, `DOCUMENT_TEXT_DETECTION`, `languageHints: ["et"]`, a base64 JPEG; text comes out
+right; a 403 billing error shows on the card; offline falls back to tesseract.
+**Not tested with the real API yet**: no key and no photo. Pricing is not verified
+(the pricing page is JS-only). README tells the user how to make and restrict the key.
 
-| Option | Quality | Cost / privacy | Offline |
-|---|---|---|---|
-| A. Tune tesseract (preprocess, `tessdata_best`, PSM) | better, likely still below Lens on curved phone photos | free, on-device | yes |
-| B. Google Cloud Vision `DOCUMENT_TEXT_DETECTION` | the same engine family as Lens | paid after a free tier (**verify current pricing**), photo goes to Google | no |
-| C. A vision LLM (Gemini or Claude) transcribes the page | likely best at reading order, hyphens, paragraphs | per-call cost, photo goes to the provider; risk of "fixing" the author's words | no |
-
-Verified today: `vision.googleapis.com` and `generativelanguage.googleapis.com` both answer
-the CORS preflight from `https://kasparpalgi.github.io` (allow-origin echoed,
-`content-type,x-goog-api-key` allowed). So B or C works from the browser with a key in ⚙,
-like ElevenLabs. No backend needed.
-**Recommendation:** B, with tesseract kept as the offline fallback only if the user wants
-offline OCR. Then update SPEC.md and README.md, and add the key field to ⚙.
-Check pricing, `languageHints: ["et"]` and the response shape in the current docs
-(Context7) first. Don't guess.
-
-## How to measure (do this before changing anything)
-1. Write a throwaway script (not committed) that runs real OCR on `samples/*.jpg` in Chromium
-   through the dev server and prints the cleaned text. This one worked for testing the EXIF
-   fix: start `npx vite --port 5180`, Playwright `setInputFiles('#file', photo)`, wait for
-   `.card .s`, print `.card` text.
+## Next session: check quality on the real photo
+1. Ask for the real photo in `samples/` and confirm the user has a Vision key in ⚙ that works.
+   Or ask the user to run one real page on the phone and paste the app's text.
 2. Compare with `samples/page1.lens.txt`: word error rate (word-level Levenshtein), plus a
    diff by eye of hyphens, paragraphs and quotes.
-3. Try each option on the same photo, report the numbers, then build the winner.
-
-## Ideas to try for option A (tesseract), cheapest first
-- `langPath` → `tessdata_best` for `est` (tesseract.js 7.0.0 defaults to `4.0.0_best_int`
-  for OEM 1). Check that the URL exists and the service worker still caches it.
-- Preprocess in `src/upright.ts`: grayscale + contrast stretch; maybe an adaptive threshold.
-- `tessedit_pageseg_mode` (3 = auto vs 4 = single column, 6 = single block).
-- Set `user_defined_dpi` (~300) so tesseract doesn't guess the DPI.
-- Try the size cap: 3000 px vs the full photo (text height matters, ~30 px x-height is ideal).
-- A crop/dewarp of a curved page is probably too much code for this app's simplicity rule.
+3. To run the real API locally: a throwaway Playwright script against `npx vite --port 5180`,
+   fill `#gkey`, `setInputFiles('#file', photo)`, wait for `.card .s`, print `.card`.
+   Never commit the key or the photo.
+4. Unverified assumption: Vision's `HYPHEN` break means the "-" is *not* a symbol. The code
+   handles both cases (adds "-" only if the text doesn't already end with one). Check on
+   a real hyphenated line ("tas-kust").
+5. If tesseract should improve too (offline fallback), ideas, cheapest first:
+   `tessdata_best` langPath, grayscale/contrast in `upright.ts`, PSM 4/6, `user_defined_dpi`.
 
 ## Text-cleanup issues spotted (independent of which OCR wins)
-- **Estonian closing quote.** Estonian dialogue is „…“: the closing quote is U+201C `“`.
-  `TERMINAL` and the sentence splitter in `src/sentences.ts` only know `"»”’)`, so
-  `„Tere.“ Next` is not split and does not count as a paragraph end. Add `“` (and test).
+- ~~Estonian closing quote `“`~~: **fixed** in `src/sentences.ts`, with a test.
+- **Running headers** (book or chapter title at the top of every page) will be read
+  aloud. Vision usually returns them as their own short block. Maybe drop a first
+  paragraph that repeats on several pages.
 - **Title lines** ("Kuidas Jaan Viinakuradiga tookord") have no terminal punctuation, so they
   get glued onto the first paragraph. Probably: a short line followed by a blank line = its
   own paragraph.
 - `joinSplitWords` (in `src/clean.ts`) needs only one rare piece, so a rare word + a common
   clitic ("ka", "ki", "gi", "ju") can merge wrongly ("maja ka" → "majaka" if "majaka"
   appears elsewhere).
-- If the OCR engine already joins lines (Vision/LLM do), `cleanText` must not mangle
-  its output. Keep the hyphen-join and page-number rules and run them on the raw lines.
+- `vision.ts` rebuilds the raw lines (`\n`) and Vision paragraphs (blank line) from the
+  symbol breaks, so `cleanText` runs the same rules as for tesseract.
 
 ## Still open from the code review (lower priority)
 - iOS: the first ▶ may be blocked, because `audio.play()` runs after an `await`

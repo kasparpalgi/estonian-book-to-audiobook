@@ -13,7 +13,7 @@ Files under ~100 lines each, one job per file. Simplicity over features.
 - No audio effects.
 - output_format: mp3_44100_128
 - Text is sent with its audio tags ([whispers], [sighs], etc.) unchanged. Eleven v4 performs them.
-Put these in one config.ts as defaults. The ⚙ panel only stores the API key, so I can't
+Put these in one config.ts as defaults. The ⚙ panel only stores the API keys (ElevenLabs, Google Vision), so I can't
 accidentally drift from these settings.
 Use Context7 / the current ElevenLabs API docs for every parameter. Don't guess.
 
@@ -31,7 +31,10 @@ Use Context7 / the current ElevenLabs API docs for every parameter. Don't guess.
 ## Flow
 1. "+ pages": <input type="file" accept="image/*" capture="environment" multiple>.
    Pages can be added any time, even while playing.
-2. OCR on-device with tesseract.js, language "est". Card shows progress until done.
+2. OCR with Google Cloud Vision DOCUMENT_TEXT_DETECTION (language hint "et"), called from
+   the browser with my Google API key from ⚙ (Google Lens has no API; this is the same
+   kind of OCR). Without a key, or offline: on-device tesseract.js "est".
+   Card shows "Reading text…" until done; Google errors are shown on the card.
 3. Clean text in plain JS: join words hyphenated across line breaks, join lines into
    paragraphs, drop lines that are only a page number, fix spaced-out words like
    "kirjel danud" only when an obvious join exists. Faint dotted underline on

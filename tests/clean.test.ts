@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { cleanText, joinLines, joinSplitWords, countWords } from '../src/clean'
+import { splitSentences } from '../src/sentences'
 
 describe('hyphen joining', () => {
   it('joins a word hyphenated across a line break', () => {
@@ -32,6 +33,19 @@ describe('paragraph cleanup', () => {
       'Teine lõik on pikk ja jookseb samuti üle mitme rea, kuni lõpuks see lõpeb lühikese reaga. Lõpp.',
       'Kolmas lõik algab kohe pärast lühikest rida ja lõpeb siin.',
     ])
+  })
+  it('ends sentences and paragraphs at the Estonian closing quote “', () => {
+    const raw = [
+      'Ema seisis ukse peal ja hüüdis üle õue poisile',
+      'kes mängis aias: „Tule koju, õhtusöök on laual.“',
+      'Ta ütles: „Kohe.“',
+      'Poiss jooksis üle muru ja astus tuppa sisse.',
+    ].join('\n')
+    expect(cleanText(raw)).toEqual([
+      'Ema seisis ukse peal ja hüüdis üle õue poisile kes mängis aias: „Tule koju, õhtusöök on laual.“ Ta ütles: „Kohe.“',
+      'Poiss jooksis üle muru ja astus tuppa sisse.',
+    ])
+    expect(splitSentences('Ta ütles: „Kohe.“ Poiss jooksis.')).toEqual(['Ta ütles: „Kohe.“', 'Poiss jooksis.'])
   })
   it('drops page numbers with dashes', () => {
     expect(cleanText('– 7 –\nTekst.')).toEqual(['Tekst.'])

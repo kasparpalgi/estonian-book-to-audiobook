@@ -28,6 +28,8 @@
     <dialog id="settings">
       <form method="dialog">
         <label>ElevenLabs API key <input id="key" type="password" autocomplete="off" /></label>
+        <label>Google Cloud Vision API key <small>(reads photos like Google Lens; empty = on-device)</small>
+          <input id="gkey" type="password" autocomplete="off" /></label>
         <p>Book: <span id="chars">0</span> characters</p>
         <p id="missing"></p>
         <button id="download" type="button">Download MP3</button>

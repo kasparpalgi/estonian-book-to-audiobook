@@ -1,5 +1,7 @@
 import { createWorker, type Worker } from 'tesseract.js'
+import * as db from './db'
 import { upright } from './upright'
+import { visionOcr } from './vision'
 
 const LOW_CONFIDENCE = 70 // words below this get a dotted underline
 
@@ -22,19 +24,25 @@ function getWorker(): Promise<Worker> {
   return worker
 }
 
+// With a Google Vision key: Google reads the page (much better on phone photos).
+// Without one, or offline: tesseract on the device.
 export function ocr(image: Blob, onProgress: (progress: number) => void): Promise<OcrResult> {
   const job = queue.then(async () => {
-    report = onProgress
-    const { data } = await (await getWorker()).recognize(await upright(image), {}, { text: true, blocks: true })
-    const words = (data.blocks ?? []).flatMap((b) =>
-      b.paragraphs.flatMap((p) => p.lines.flatMap((l) => l.words)),
-    )
-    const lowConf = words
-      .filter((w) => w.confidence < LOW_CONFIDENCE)
-      .map((w) => w.text.replace(/^[^\p{L}]+|[^\p{L}]+$/gu, ''))
-      .filter(Boolean)
-    return { text: data.text, lowConf }
+    const photo = await upright(image)
+    const key = await db.get<string>('kv', 'visionKey')
+    return (key && (await visionOcr(photo, key))) || tesseract(photo, onProgress)
   })
   queue = job.catch(() => {})
   return job
+}
+
+async function tesseract(photo: Blob, onProgress: (progress: number) => void): Promise<OcrResult> {
+  report = onProgress
+  const { data } = await (await getWorker()).recognize(photo, {}, { text: true, blocks: true })
+  const words = (data.blocks ?? []).flatMap((b) => b.paragraphs.flatMap((p) => p.lines.flatMap((l) => l.words)))
+  const lowConf = words
+    .filter((w) => w.confidence < LOW_CONFIDENCE)
+    .map((w) => w.text.replace(/^[^\p{L}]+|[^\p{L}]+$/gu, ''))
+    .filter(Boolean)
+  return { text: data.text, lowConf }
 }
